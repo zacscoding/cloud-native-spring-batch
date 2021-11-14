@@ -1,0 +1,27 @@
+server:
+  port: 8888
+
+logging:
+  level:
+    root: WARN
+    com.github.zacscoding: ERROR
+
+spring:
+  application:
+    name: "config-server"
+  cloud:
+    config:
+      server:
+        git:
+          # default 0, 매 요청마다 fetch
+          # 단위는 Second 이며 (refresh > 0 && (now() - lastRefresh) < (refreshRate * 1000) 면 fetch 하지 않음
+          refreshRate: 5
+          # uri: https://github.com/evagova/config-repo
+          uri: file://${user.home}/config-repo
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: ['bus-refresh']

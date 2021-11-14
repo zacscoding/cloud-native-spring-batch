@@ -1,0 +1,53 @@
+server:
+  port: 8899
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  sql:
+    init:
+      mode: always
+      platform: mysql
+      schema-locations:
+        - classpath:schema-mysql.sql
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:53306/spring_batch?useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC
+    username: root
+    password: p@ssw0rd
+    hikari:
+      jdbc-url: jdbc:mysql://localhost:53306/spring_batch?useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: always
+
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: true
+
+logging:
+  config:
+  level:
+    root: WARN
+    io.spring.batch: WARN
+    com.github.zacscoding: TRACE
+    p6spy: WARN
+    #org.hibernate.SQL: TRACE
+
+job:
+  resource-path: s3://spring-batch/*.csv
+
+cloud:
+  aws:
+    s3:
+      endpoint: http://localhost:4572
+      bucket: spring-batch
+    region:
+      static: ap-northeast-2
+    stack:
+      auto: false
+#    credentials:
+#      instanceProfile: true

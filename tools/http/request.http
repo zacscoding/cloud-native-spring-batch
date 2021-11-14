@@ -1,0 +1,4 @@
+### Batch Service
+### Start a job
+POST http://localhost:8899/batch/s3jdbcJob
+

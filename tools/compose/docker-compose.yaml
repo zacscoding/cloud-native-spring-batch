@@ -1,0 +1,64 @@
+version: '3.1'
+
+services:
+  db:
+    image: mysql:8.0.17
+    container_name: db
+    command: [ '--default-authentication-plugin=mysql_native_password', '--default-storage-engine=innodb' ]
+    hostname: db
+    environment:
+      - MYSQL_ROOT_PASSWORD=p@ssw0rd
+      - MYSQL_DATABASE=spring_batch
+    ports:
+      - 53306:3306
+
+  localstack:
+    container_name: "localstack_main"
+    image: localstack/localstack:0.11.4
+    #image: localstack/localstack:latest
+    ports:
+      - "8080:8080"
+      - "4572:4572"
+    environment:
+      - USE_SSL=0
+      - SERVICES=s3
+      - DATA_DIR=/tmp/localstack/data
+      - DEBUG=1
+      - DEFAULT_REGION=ap-southeast-2
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - PORT_WEB_UI=8080
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${TMPDIR:-/tmp/localstack}:/tmp/localstack
+
+  init.s3:
+    image: amazon/aws-cli
+    entrypoint: /bin/sh -c
+    container_name: init.s3
+    command: "/s3/init.sh"
+    environment:
+      - ENVIRONMENT=LOCAL
+    depends_on:
+      - localstack
+    volumes:
+      - ${HOME}/.aws:/root/.aws
+      - ./s3:/s3/input
+      - ./s3/init.sh:/s3/init.sh
+
+#  batch-service:
+#    build:
+#      context: ../../batch-service
+#      dockerfile: Dockerfile
+#    image: cloud-native-spring-batch/batch-service
+#    hostname: batch-service
+#    container_name: batch-service
+#    volumes:
+#      - ../../src/main/resources/application.yaml:/application/application.yaml
+#    ports:
+#      - "8899:8899"
+#    restart: always
+#
+#    depends_on:
+#      - db
+#      - localstack
+#      - init.s3

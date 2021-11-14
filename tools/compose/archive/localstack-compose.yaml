@@ -1,0 +1,32 @@
+version: '3.1'
+
+services:
+  localstack:
+    container_name: "${LOCALSTACK_DOCKER_NAME-localstack_main}"
+    image: localstack/localstack:0.11.4
+    #image: localstack/localstack:latest
+    ports:
+      - "8080:8080"
+      - "4572:4572"
+    environment:
+      - USE_SSL=0
+      - SERVICES=s3
+      - DATA_DIR=/tmp/localstack/data
+      - DEBUG=1
+      - DEFAULT_REGION=ap-southeast-2
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - PORT_WEB_UI=8080
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${TMPDIR:-/tmp/localstack}:/tmp/localstack
+
+# docker-compose -f localstack-compose.yaml -d
+# aws --endpoint-url="http://localhost:4572" s3 mb s3://spring-batch
+# aws --endpoint-url="http://localhost:4572" s3api wait bucket-exists --bucket spring-batch
+# aws --endpoint-url="http://localhost:4572" s3 put-object --bucket spring-batch --key myobject1
+# aws --endpoint-url="http://localhost:4572" s3api put-object --bucket spring-batch --key myobject1 --body ./batch-service/src/main/resources/input/data.csv
+# aws --endpoint-url="http://localhost:4572" s3api get-object --bucket spring-batch --key myobject1 result.csv
+# aws --endpoint-url="http://localhost:4572" s3api list-objects --bucket spring-batch
+# https://github.com/localstack/localstack/issues/43
+# vi /etc/host
+# 127.0.0.1       spring-batch.localhost

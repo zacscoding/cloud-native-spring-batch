@@ -1,0 +1,4 @@
+rootProject.name = 'cloud-native-spring-batch'
+include 'batch-service'
+include 'config-server'
+
