@@ -5,5 +5,5 @@ CREATE TABLE IF NOT EXISTS foo (
     first VARCHAR(45) NOT NULL ,
     second VARCHAR(45) NOT NULL ,
     third VARCHAR(45) NOT NULL ,
-    message VARCHAR(45) NOT NULL
+    message VARCHAR(1024) NOT NULL
 );

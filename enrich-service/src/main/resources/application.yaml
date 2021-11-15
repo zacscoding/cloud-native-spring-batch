@@ -1,0 +1,32 @@
+server:
+  port: 9890
+
+spring:
+  application:
+    name: enrich-service
+  config:
+    import: "configserver:http://localhost:8888/config-server"
+
+logging:
+  level:
+    root: INFO
+
+eureka:
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+    statusPageUrlPath: /actuator/info
+    healthCheckUrlPath: /actuator/health
+  client:
+    service-url:
+      defaultZone: http://localhost:3000/eureka/
+    register-with-eureka: true
+    fetch-registry: false
+
+app:
+  message: "Enrich"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "refresh"

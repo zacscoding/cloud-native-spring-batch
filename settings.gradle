@@ -1,4 +1,5 @@
 rootProject.name = 'cloud-native-spring-batch'
-include 'batch-service'
 include 'config-server'
-
+include 'eureka-server'
+include 'batch-service'
+include 'enrich-service'

@@ -10,15 +10,15 @@ services:
       - MYSQL_ROOT_PASSWORD=p@ssw0rd
       - MYSQL_DATABASE=spring_batch
     ports:
-      - 53306:3306
+      - "53306:3306"
 
   localstack:
-    container_name: "localstack_main"
+    container_name: localstack
     image: localstack/localstack:0.11.4
-    #image: localstack/localstack:latest
     ports:
       - "8080:8080"
       - "4572:4572"
+    hostname: localstack
     environment:
       - USE_SSL=0
       - SERVICES=s3
@@ -45,20 +45,93 @@ services:
       - ./s3:/s3/input
       - ./s3/init.sh:/s3/init.sh
 
-#  batch-service:
-#    build:
-#      context: ../../batch-service
-#      dockerfile: Dockerfile
-#    image: cloud-native-spring-batch/batch-service
-#    hostname: batch-service
-#    container_name: batch-service
-#    volumes:
-#      - ../../src/main/resources/application.yaml:/application/application.yaml
-#    ports:
-#      - "8899:8899"
-#    restart: always
-#
-#    depends_on:
-#      - db
-#      - localstack
-#      - init.s3
+  config-server:
+    build:
+      context: ../../config-server
+      dockerfile: Dockerfile
+    image: cloud-native-spring-batch/config-server
+    hostname: config-server
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    restart: always
+    environment:
+      - SPRING_CLOUD_CONFIG_SERVER_GIT_URI=file:///config-server/config-repo
+      - LOGGING_LEVEL_ROOT=INFO
+      - LOGGING_LEVEL_COM.GITHUB.ZACSCODING=DEBUG
+    volumes:
+      - ./config-repo:/config-server/config-repo
+
+  eureka-server:
+    build:
+      context: ../../eureka-server
+      dockerfile: Dockerfile
+    image: cloud-native-spring-batch/eureka-server
+    hostname: eureka-server
+    container_name: eureka-server
+    ports:
+      - "3000:3000"
+    restart: always
+    environment:
+      - LOGGING_LEVEL_ROOT=WARN
+    depends_on:
+      - config-server
+
+  enrich-server1:
+    build:
+      context: ../../enrich-service
+      dockerfile: Dockerfile
+    image: cloud-native-spring-batch/enrich-service
+    hostname: enrich-service1
+    container_name: enrich-service1
+    ports:
+      - "9890:9890"
+    restart: always
+    environment:
+      - SERVER_PORT=9890
+      - SPRING_CONFIG_IMPORT=configserver:http://config-server:8888/config-server
+      - EUREKA_CLIENT_SERVICE-URL_DEFAULT-ZONE=http://eureka-server:3000/eureka/
+      - LOGGING_LEVEL_ROOT=INFO
+    depends_on:
+      - config-server
+      - eureka-server
+
+  enrich-server2:
+    build:
+      context: ../../enrich-service
+      dockerfile: Dockerfile
+    image: cloud-native-spring-batch/enrich-service
+    hostname: enrich-service2
+    container_name: enrich-service2
+    ports:
+      - "9891:9891"
+    restart: always
+    environment:
+      - SERVER_PORT=9891
+      - SPRING_CONFIG_IMPORT=configserver:http://config-server:8888/config-server
+      - EUREKA_CLIENT_SERVICE-URL_DEFAULT-ZONE=http://eureka-server:3000/eureka/
+      - LOGGING_LEVEL_ROOT=INFO
+    depends_on:
+      - config-server
+      - eureka-server
+
+  batch-service:
+    build:
+      context: ../../batch-service
+      dockerfile: Dockerfile
+    image: cloud-native-spring-batch/batch-service
+    hostname: batch-service
+    container_name: batch-service
+    ports:
+      - "8899:8899"
+    environment:
+      - SPRING_CONFIG_IMPORT=configserver:http://config-server:8888/config-server
+      - SPRING_PROFILES_ACTIVE=docker
+    restart: always
+    volumes:
+      - ${HOME}/.aws:/root/.aws
+    depends_on:
+      - config-server
+      - db
+      - localstack
+      - init.s3

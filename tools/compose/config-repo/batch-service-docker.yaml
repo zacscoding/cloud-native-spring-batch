@@ -4,8 +4,6 @@ server:
 spring:
   application:
     name: batch-service
-  config:
-    import: "configserver:http://localhost:8888/config-server"
   cloud:
     loadbalancer:
       ribbon:
@@ -20,11 +18,11 @@ spring:
         - classpath:schema-mysql.sql
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:53306/spring_batch?useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC
+    url: jdbc:mysql://db:3306/spring_batch?useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC
     username: root
     password: p@ssw0rd
     hikari:
-      jdbc-url: jdbc:mysql://localhost:53306/spring_batch?useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC
+      jdbc-url: jdbc:mysql://db:3306/spring_batch?useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC
   batch:
     job:
       enabled: false
@@ -34,7 +32,7 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:3000/eureka/
+      defaultZone: http://eureka-server:3000/eureka/
     register-with-eureka: false
     fetch-registry: true
 
@@ -46,7 +44,7 @@ decorator:
 logging:
   config:
   level:
-    root: WARN
+    root: INFO
     io.spring.batch: WARN
     com.github.zacscoding: TRACE
     p6spy: WARN
@@ -58,7 +56,7 @@ job:
 cloud:
   aws:
     s3:
-      endpoint: http://localhost:4572
+      endpoint: http://localstack:4572
       bucket: spring-batch
     region:
       static: ap-northeast-2

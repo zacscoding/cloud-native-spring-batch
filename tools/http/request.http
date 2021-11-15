@@ -1,4 +1,33 @@
+################################################
 ### Batch Service
-### Start a job
-POST http://localhost:8899/batch/s3jdbcJob
+################################################
+### Call enrich via Loadbalanced Client
+GET {{batch-service-endpoint}}/debug/call
 
+
+### Start a job
+POST {{batch-service-endpoint}}/batch/s3jdbcJob
+
+################################################
+### Config Server
+################################################
+### Get batch-service
+GET {{config-server-endpoint}}/config-server/batch-service/default
+
+### Get enrich-service
+GET {{config-server-endpoint}}/config-server/enrich-service/default
+
+
+
+################################################
+### Enrich Service - service1
+### Call GET /enrich
+GET {{enrich-service1-endpoint}}/enrich
+
+### Call GET /enrich - service2
+GET {{enrich-service2-endpoint}}/enrich
+
+### Refresh configs - service1
+POST {{enrich-service1-endpoint}}/actuator/refresh
+
+### Refresh configs - service2

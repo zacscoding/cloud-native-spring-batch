@@ -1,38 +1,54 @@
 package com.github.zacscoding.configserver;
 
+import javax.annotation.PostConstruct;
+
 import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
 import org.springframework.cloud.config.server.environment.EnvironmentController;
 import org.springframework.cloud.config.server.environment.EnvironmentRepository;
+import org.springframework.cloud.config.server.environment.MultipleJGitEnvironmentProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
 @Aspect
+@RequiredArgsConstructor
 public class LoggingAspect {
+
+    private final MultipleJGitEnvironmentProperties properties;
+    private final ObjectMapper objectMapper;
+
+    @PostConstruct
+    private void setUp() {
+        logger.info("## Config server git uri: {}", properties.getUri());
+    }
 
     /**
      * {@link EnvironmentRepository} 의 findOne() 메소드 호출 전 (파라미터, 구현체, Call Stack)을 출력
      */
-    @Before("execution(* org.springframework.cloud.config.server.environment.EnvironmentRepository.findOne(..))")
+    //@Before("execution(* org.springframework.cloud.config.server.environment.EnvironmentRepository.findOne(..))")
     public void environmentRepositoryOnBefore(JoinPoint joinPoint) {
-        logger.debug("## EnvironmentRepository({})::findOne is called",
-                     joinPoint.getTarget().getClass().getSimpleName());
-
-        StringBuilder stack = new StringBuilder();
+        final StringBuilder stack = new StringBuilder();
         for (StackTraceElement elt : Thread.currentThread().getStackTrace()) {
             String callStack = elt.toString();
             if (StringUtils.startsWithIgnoreCase(callStack, "org.springframework.cloud.config")) {
                 stack.append(callStack).append("\n");
             }
         }
-
-        Object[] args = joinPoint.getArgs();
-        logger.debug("application: {} / profile : {} / label : {}\n{}", args[0], args[1], args[2], stack.toString());
+        logger.info("// ====================================================================");
+        logger.info("## EnvironmentRepository({})::findOne is called",
+                    joinPoint.getTarget().getClass().getSimpleName());
+        final Object[] args = joinPoint.getArgs();
+        logger.info("application: {} / profile : {} / label : {}", args[0], args[1], args[2]);
+        logger.info("==================================================================== //");
     }
 
     /* curl -XGET http://localhost:8888/demo/default 호출 시 출력 결과
@@ -51,15 +67,37 @@ public class LoggingAspect {
     /**
      * {@link EnvironmentController}의 Endpoint 호출 시 로깅
      */
-    @Before("execution(* org.springframework.cloud.config.server.environment.EnvironmentController.default*(..))"
+    @Around("execution(* org.springframework.cloud.config.server.environment.EnvironmentController.default*(..))"
             + "|| execution(* org.springframework.cloud.config.server.environment.EnvironmentController.labelled*(..))")
-    public void environmentControllerOnBefore(JoinPoint joinPoint) {
-        logger.debug("## EnvironmentController called: {}", joinPoint.getSignature());
+    public Object environmentControllerOnBefore(ProceedingJoinPoint joinPoint) throws Throwable {
+        final long start = System.currentTimeMillis();
+        final String name = joinPoint.getArgs()[0].toString();
+        final String profiles = joinPoint.getArgs()[1].toString();
+        final String label = joinPoint.getArgs().length > 2 ? joinPoint.getArgs()[2].toString() : "null";
+        Object result = null;
 
-        String name = joinPoint.getArgs()[0].toString();
-        String profiles = joinPoint.getArgs()[1].toString();
-        String label = joinPoint.getArgs().length > 2 ? joinPoint.getArgs()[2].toString() : "null";
+        try {
+            result = joinPoint.proceed();
+            return result;
+        } finally {
+            final long elapsed = System.currentTimeMillis() - start;
+            logger.info("// ====================================================================");
+            logger.info("## EnvironmentController called: {}", joinPoint.getSignature());
+            logger.info(">> name: {} / profiles: {} / label: {}, elapsed: {}[ms]", name, profiles, label, elapsed);
+            logger.info(">> result: {}", toString(result));
+            logger.info("==================================================================== //");
+        }
+    }
 
-        logger.debug("name : {} / profiles : {} / label : {}", name, profiles, label);
+    public String toString(Object object) {
+        if (object == null) {
+            return "NULL";
+        }
+
+        try {
+            return objectMapper.writeValueAsString(object);
+        } catch (Exception e) {
+            return object.toString();
+        }
     }
 }

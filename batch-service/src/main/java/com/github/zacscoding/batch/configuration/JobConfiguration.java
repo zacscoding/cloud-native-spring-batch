@@ -110,9 +110,4 @@ public class JobConfiguration {
                                 .start(load())
                                 .build();
     }
-
-    @Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
-    }
 }

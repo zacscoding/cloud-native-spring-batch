@@ -9,6 +9,8 @@ fi
 
 function clean(){
   cd "${SCRIPT_PATH}"/../compose && docker-compose  -f docker-compose.yaml down -v
+  docker volume rm $(docker volume ls -q)
+  docker rmi -f $(docker images "cloud-native-spring-batch/*" -a -q)
 }
 
 function build(){
@@ -21,7 +23,7 @@ function build(){
 }
 
 function up(){
-  cd "${SCRIPT_PATH}"/../compose && docker-compose up --force-recreate
+  cd "${SCRIPT_PATH}"/../compose && docker-compose up -d --force-recreate
 }
 
 function down(){
@@ -57,6 +59,5 @@ do
         *)
             echo $"Usage: $0 {up|down|build|start|stop|clean|restart}"
             exit 1
-
 esac
 done

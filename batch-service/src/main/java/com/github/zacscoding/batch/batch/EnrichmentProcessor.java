@@ -1,5 +1,7 @@
 package com.github.zacscoding.batch.batch;
 
+import java.util.concurrent.TimeUnit;
+
 import javax.validation.constraints.NotNull;
 
 import org.springframework.batch.item.ItemProcessor;
@@ -19,6 +21,10 @@ public class EnrichmentProcessor implements ItemProcessor<Foo, Foo> {
     @Recover
     public Foo fallback(Foo foo) {
         foo.setMessage("error-fallback");
+        try {
+            TimeUnit.MILLISECONDS.sleep(100L);
+        } catch (Exception ignored) {
+        }
         return foo;
     }
 
@@ -26,7 +32,7 @@ public class EnrichmentProcessor implements ItemProcessor<Foo, Foo> {
     @Override
     public Foo process(@NotNull Foo foo) {
         final ResponseEntity<String> responseEntity = restTemplate.exchange(
-                "http://localhost:8899/enrich",
+                "http://enrich-service/enrich",
                 HttpMethod.GET,
                 null,
                 String.class
