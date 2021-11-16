@@ -11,6 +11,7 @@ function clean(){
   cd "${SCRIPT_PATH}"/../compose && docker-compose  -f docker-compose.yaml down -v
   docker volume rm $(docker volume ls -q)
   docker rmi -f $(docker images "cloud-native-spring-batch/*" -a -q)
+  docker rmi -f $(docker images -f "dangling=true" -q)
 }
 
 function build(){

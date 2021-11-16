@@ -1,0 +1,13 @@
+dependencies {
+    // spring
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-batch'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+
+    runtimeOnly 'mysql:mysql-connector-java'
+
+    implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.6.4'
+    implementation 'com.github.javafaker:javafaker:0.15'
+}
